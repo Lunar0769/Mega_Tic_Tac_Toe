@@ -129,7 +129,7 @@ function App() {
   // Establish WebSocket connection
   const { send } = useWebSocket(
     process.env.NODE_ENV === 'production' 
-      ? 'wss://YOUR-ACTUAL-RAILWAY-URL.railway.app' // Replace with your actual Railway URL
+      ? 'wss://Mega_Tic_Tac_Toe.railway.app' // Replace with your actual Railway URL
       : 'ws://localhost:4000', 
     handleMessage
   );
