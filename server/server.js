@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 
-const server = new WebSocket.Server({ port: 4000 });
+const PORT = process.env.PORT || 4000;
+const server = new WebSocket.Server({ port: PORT });
 
 // Store rooms and their state
 const rooms = new Map();
@@ -279,4 +280,4 @@ server.on('connection', (ws) => {
   });
 });
 
-console.log('WebSocket server running on port 4000');
+console.log(`WebSocket server running on port ${PORT}`);

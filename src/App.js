@@ -129,7 +129,7 @@ function App() {
   // Establish WebSocket connection
   const { send } = useWebSocket(
     process.env.NODE_ENV === 'production' 
-      ? 'wss://your-websocket-server.herokuapp.com' // Replace with your deployed server URL
+      ? 'wss://your-app.railway.app' // Replace with your actual Railway URL
       : 'ws://localhost:4000', 
     handleMessage
   );
