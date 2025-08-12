@@ -2,7 +2,7 @@
 
 A real-time multiplayer implementation of Ultimate Tic Tac Toe using React and WebSocket.
 
-🎮 **[Play Live Demo](https://yourusername.github.io/mega-tic-tac-toe)** (Replace with your actual GitHub Pages URL)
+🎮 **[Play Live Demo](https://Lunar0769.github.io/Mega_Tic_Tac_Toe)**
 
 ## Game Rules
 
@@ -27,8 +27,8 @@ Ultimate Tic Tac Toe consists of 9 small tic-tac-toe boards arranged in a 3×3 g
 
 ### 1. Clone and Install
 ```bash
-git clone https://github.com/yourusername/mega-tic-tac-toe.git
-cd mega-tic-tac-toe
+git clone https://github.com/Lunar0769/Mega_Tic_Tac_Toe.git
+cd Mega_Tic_Tac_Toe
 npm install
 cd server && npm install && cd ..
 ```
@@ -53,7 +53,7 @@ npm start
 
 1. **Update package.json homepage**:
    ```json
-   "homepage": "https://yourusername.github.io/mega-tic-tac-toe"
+   "homepage": "https://Lunar0769.github.io/Mega_Tic_Tac_Toe"
    ```
 
 2. **Install gh-pages**:
