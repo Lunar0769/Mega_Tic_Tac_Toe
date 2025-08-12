@@ -1,0 +1,65 @@
+body {
+  font-family: sans-serif;
+  background: #f6f6f6;
+  min-height: 100vh;
+}
+.App {
+  margin: 0 auto;
+  padding: 40px 0;
+  max-width: 600px;
+}
+.mega-board {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 10px;
+  margin: 30px auto 0 auto;
+}
+.sub-board {
+  border: 2px solid #333;
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  background: #fff;
+}
+.sub-board.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.cell {
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s;
+}
+.cell:disabled {
+  background: #e0e0e0;
+  color: #888;
+  cursor: not-allowed;
+}
+.lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  margin-top: 80px;
+}
+.lobby input {
+  padding: 7px;
+  font-size: 16px;
+}
+.lobby button {
+  padding: 7px 18px;
+  margin: 0 2px;
+  font-size: 16px;
+  background: #222;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+.lobby button:disabled {
+  background: #aaa;
+}
+
