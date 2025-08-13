@@ -1095,6 +1095,13 @@ Board Selection Waiting */
   font-size: 1.1rem;
   animation: waitingPulse 2s infinite;
   text-align: center;
+}
+
+/* Special styling for the selector */
+.waiting-message.selector {
+  background: rgba(40, 167, 69, 0.1);
+  border-color: rgba(40, 167, 69, 0.3);
+  color: #28a745;
 }/* 
 Game Layout */
 .game-container {
@@ -1475,4 +1482,39 @@ ar Sections */
   .room-info, .game-status, .player-count, .replay-controls {
     margin-bottom: 12px;
   }
+}/* Bo
+ard Selection Disabled State */
+.mega-board.board-selection-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  position: relative;
+}
+
+.mega-board.board-selection-disabled::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  z-index: 10;
+}
+
+.mega-board.board-selection-disabled::after {
+  content: '⏳ Waiting for board selection...';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  padding: 16px 24px;
+  border-radius: 16px;
+  font-weight: 600;
+  color: #667eea;
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  z-index: 11;
+  animation: pulse 2s infinite;
 }

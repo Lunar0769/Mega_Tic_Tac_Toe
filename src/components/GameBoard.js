@@ -35,14 +35,14 @@ function GameBoard({
     <div className="game-container">
       {/* Main Game Area - Pure Game Board Only */}
       <div className="game-main">
-        <div className="mega-board">
+        <div className={`mega-board ${boardSelectionPlayer && boardSelectionPlayer !== playerSymbol ? 'board-selection-disabled' : ''}`}>
           {boards.map((cells, boardIdx) => (
             <SubBoard
               key={boardIdx}
               cells={cells}
               isActive={!gameWinner && !isGameTie && (nextBoard === null || nextBoard === boardIdx)}
               onCellClick={cellIdx => onCellClick(boardIdx, cellIdx)}
-              canClick={isMyTurn && gameStarted && !isSpectator}
+              canClick={isMyTurn && gameStarted && !isSpectator && !boardSelectionPlayer}
               boardStatus={boardStatuses[boardIdx]}
             />
           ))}
@@ -79,10 +79,13 @@ function GameBoard({
             </div>
           ) : (
             <>
-              {boardSelectionPlayer && !showBoardSelection ? (
+              {boardSelectionPlayer ? (
                 <div className="board-selection-waiting">
-                  <div className="waiting-message">
-                    ⏳ Player {boardSelectionPlayer} is choosing the next board...
+                  <div className={`waiting-message ${boardSelectionPlayer === playerSymbol ? 'selector' : ''}`}>
+                    {boardSelectionPlayer === playerSymbol 
+                      ? '🎯 Choose which board your opponent should play in'
+                      : `⏳ Player ${boardSelectionPlayer} is choosing the next board...`
+                    }
                   </div>
                 </div>
               ) : (

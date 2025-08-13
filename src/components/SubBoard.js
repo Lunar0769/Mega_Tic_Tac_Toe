@@ -5,7 +5,7 @@ function SubBoard({ cells, isActive, onCellClick, boardStatus, canClick = true }
   const isCompleted = boardStatus !== null;
   
   return (
-    <div className={`sub-board ${isActive ? 'active' : 'disabled'} ${isCompleted ? 'completed' : ''} ${!canClick ? 'not-my-turn' : ''}`}>
+    <div className={`sub-board ${isActive && canClick ? 'active' : 'disabled'} ${isCompleted ? 'completed' : ''} ${!canClick ? 'not-my-turn' : ''}`}>
       {isCompleted ? (
         <div className="board-winner">
           {boardStatus === 'tie' ? 'TIE' : boardStatus}
