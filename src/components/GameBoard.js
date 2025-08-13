@@ -59,15 +59,25 @@ function GameBoard({
           </div>
         ) : (
           <>
-            <div className={`turn-indicator ${isMyTurn ? 'my-turn' : 'opponent-turn'}`}>
-              {isMyTurn ? 'Your turn' : `Player ${xIsNext ? 'X' : 'O'}'s turn`}
-            </div>
-            <div>
-              {nextBoard !== null 
-                ? `Play in board ${nextBoard + 1}` 
-                : 'Play in any available board'
-              }
-            </div>
+            {boardSelectionPlayer && !showBoardSelection ? (
+              <div className="board-selection-waiting">
+                <div className="waiting-message">
+                  ⏳ Player {boardSelectionPlayer} is choosing the next board...
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={`turn-indicator ${isMyTurn ? 'my-turn' : 'opponent-turn'}`}>
+                  {isMyTurn ? 'Your turn' : `Player ${xIsNext ? 'X' : 'O'}'s turn`}
+                </div>
+                <div>
+                  {nextBoard !== null 
+                    ? `Play in board ${nextBoard + 1}` 
+                    : 'Play in any available board'
+                  }
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

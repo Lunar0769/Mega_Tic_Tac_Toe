@@ -240,7 +240,7 @@ server.on('connection', (ws) => {
               gameRoom.waitingForBoardSelection = true;
               gameRoom.boardSelectionPlayer = winnerSymbol || message.symbol; // Current player if tie
               
-              // Notify clients about board selection requirement
+              // Notify ALL clients about board selection requirement (for UI updates)
               broadcast(message.roomId, {
                 type: 'boardSelectionRequired',
                 player: gameRoom.boardSelectionPlayer
@@ -280,6 +280,16 @@ server.on('connection', (ws) => {
           const selectRoom = rooms.get(message.roomId);
           if (!selectRoom || !selectRoom.waitingForBoardSelection) break;
           
+          // Validate that the correct player is making the selection
+          const selectingPlayer = selectRoom.players.find(p => p.username === ws.username);
+          if (!selectingPlayer || selectingPlayer.symbol !== selectRoom.boardSelectionPlayer) {
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: 'You are not authorized to select the board'
+            }));
+            break;
+          }
+          
           // Validate the board selection
           const selectedBoardStatus = getBoardStatus(selectRoom.boards[message.boardIndex]);
           if (selectedBoardStatus !== null) {
@@ -295,13 +305,13 @@ server.on('connection', (ws) => {
           selectRoom.waitingForBoardSelection = false;
           selectRoom.boardSelectionPlayer = null;
           
-          // Broadcast the board selection
+          // Broadcast the board selection to all clients
           broadcast(message.roomId, {
             type: 'boardSelected',
             boardIndex: message.boardIndex
           });
           
-          console.log(`Board ${message.boardIndex} selected for room ${message.roomId}`);
+          console.log(`Board ${message.boardIndex} selected by ${ws.username} for room ${message.roomId}`);
           break;
 
         case 'replayGame':

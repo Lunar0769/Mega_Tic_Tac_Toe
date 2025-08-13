@@ -1071,4 +1071,21 @@ nhanced Particle Effects */
     opacity: 1;
     transform: scale(1) translateY(0);
   }
+}/* 
+Board Selection Waiting */
+.board-selection-waiting {
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.waiting-message {
+  background: rgba(243, 156, 18, 0.1);
+  border: 2px solid rgba(243, 156, 18, 0.3);
+  border-radius: 16px;
+  padding: 16px 24px;
+  color: #f39c12;
+  font-weight: 600;
+  font-size: 1.1rem;
+  animation: waitingPulse 2s infinite;
+  text-align: center;
 }
