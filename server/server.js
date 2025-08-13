@@ -223,9 +223,33 @@ server.on('connection', (ws) => {
           const gameWinner = checkGameWinner(boardStatuses);
           const gameTie = isGameTie(boardStatuses);
           
-          // Determine next board
-          const targetBoardStatus = getBoardStatus(gameRoom.boards[message.cellIndex]);
-          gameRoom.nextBoard = targetBoardStatus !== null ? null : message.cellIndex;
+          // Advanced logic for next board determination
+          const targetBoardIndex = message.cellIndex;
+          const targetBoardStatus = getBoardStatus(gameRoom.boards[targetBoardIndex]);
+          
+          if (targetBoardStatus !== null) {
+            // Target board is completed
+            const winnerSymbol = targetBoardStatus === 'tie' ? null : targetBoardStatus;
+            const nextPlayerSymbol = gameRoom.xIsNext ? 'O' : 'X'; // Next player after current move
+            
+            if (winnerSymbol === nextPlayerSymbol) {
+              // Winner of sub-board is the same as next player - they can choose any board
+              gameRoom.nextBoard = null;
+            } else {
+              // Winner of sub-board is different - they choose where next player plays
+              gameRoom.waitingForBoardSelection = true;
+              gameRoom.boardSelectionPlayer = winnerSymbol || message.symbol; // Current player if tie
+              
+              // Notify clients about board selection requirement
+              broadcast(message.roomId, {
+                type: 'boardSelectionRequired',
+                player: gameRoom.boardSelectionPlayer
+              });
+            }
+          } else {
+            // Target board is available
+            gameRoom.nextBoard = targetBoardIndex;
+          }
           
           // Toggle turn
           gameRoom.xIsNext = !gameRoom.xIsNext;
@@ -250,6 +274,64 @@ server.on('connection', (ws) => {
           console.log(`Move in room ${message.roomId}: board ${message.boardIndex}, cell ${message.cellIndex}, symbol ${message.symbol}`);
           if (gameWinner) console.log(`Game won by ${gameWinner} in room ${message.roomId}`);
           if (gameTie) console.log(`Game tied in room ${message.roomId}`);
+          break;
+
+        case 'selectBoard':
+          const selectRoom = rooms.get(message.roomId);
+          if (!selectRoom || !selectRoom.waitingForBoardSelection) break;
+          
+          // Validate the board selection
+          const selectedBoardStatus = getBoardStatus(selectRoom.boards[message.boardIndex]);
+          if (selectedBoardStatus !== null) {
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: 'Selected board is already completed'
+            }));
+            break;
+          }
+          
+          // Set the next board and clear waiting state
+          selectRoom.nextBoard = message.boardIndex;
+          selectRoom.waitingForBoardSelection = false;
+          selectRoom.boardSelectionPlayer = null;
+          
+          // Broadcast the board selection
+          broadcast(message.roomId, {
+            type: 'boardSelected',
+            boardIndex: message.boardIndex
+          });
+          
+          console.log(`Board ${message.boardIndex} selected for room ${message.roomId}`);
+          break;
+
+        case 'replayGame':
+          const replayRoom = rooms.get(message.roomId);
+          if (!replayRoom) break;
+          
+          // Reset game state
+          replayRoom.boards = Array.from({ length: 9 }, () => Array(9).fill(null));
+          replayRoom.xIsNext = true;
+          replayRoom.nextBoard = null;
+          replayRoom.waitingForBoardSelection = false;
+          replayRoom.boardSelectionPlayer = null;
+          
+          // Update players for new game
+          const newPlayers = message.players.map((player, index) => ({
+            ...player,
+            symbol: index === 0 ? 'X' : 'O'
+          }));
+          
+          // Keep spectators
+          const spectators = replayRoom.players.filter(p => !p.symbol);
+          replayRoom.players = [...newPlayers, ...spectators];
+          
+          // Broadcast game reset
+          broadcast(message.roomId, {
+            type: 'gameReset',
+            players: replayRoom.players
+          });
+          
+          console.log(`Game reset in room ${message.roomId} with players:`, newPlayers.map(p => p.username));
           break;
 
         default:
