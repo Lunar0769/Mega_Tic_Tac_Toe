@@ -7,7 +7,7 @@ function Lobby({ onCreate, onJoin }) {
   return (
     <div className="lobby">
       <h2>Mega Tic Tac Toe</h2>
-      <p>Create or Join a Room</p>
+      <p>Ultimate multiplayer strategy game</p>
       
       <input
         type="text"

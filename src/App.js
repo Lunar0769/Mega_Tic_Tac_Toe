@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useWebSocket } from './hooks/useWebSocket';
 import Lobby from './components/Lobby';
 import GameBoard from './components/GameBoard';
+import ParticleBackground from './components/ParticleBackground';
 import { getAllBoardStatuses, checkGameWinner, isGameTie } from './utils/gameLogic';
 
 function App() {
@@ -180,26 +181,29 @@ function App() {
   };
 
   return (
-    <div className="App">
-      {!isInRoom ? (
-        <Lobby onCreate={handleCreateRoom} onJoin={handleJoinRoom} />
-      ) : (
-        <GameBoard
-          boards={boards}
-          nextBoard={nextBoard}
-          onCellClick={handleCellClick}
-          xIsNext={xIsNext}
-          roomId={roomId}
-          gameWinner={gameWinner}
-          isGameTie={gameTied}
-          playerSymbol={playerSymbol}
-          gameStarted={gameStarted}
-          players={players}
-          isSpectator={isSpectator}
-          username={username}
-        />
-      )}
-    </div>
+    <>
+      <ParticleBackground />
+      <div className="App">
+        {!isInRoom ? (
+          <Lobby onCreate={handleCreateRoom} onJoin={handleJoinRoom} />
+        ) : (
+          <GameBoard
+            boards={boards}
+            nextBoard={nextBoard}
+            onCellClick={handleCellClick}
+            xIsNext={xIsNext}
+            roomId={roomId}
+            gameWinner={gameWinner}
+            isGameTie={gameTied}
+            playerSymbol={playerSymbol}
+            gameStarted={gameStarted}
+            players={players}
+            isSpectator={isSpectator}
+            username={username}
+          />
+        )}
+      </div>
+    </>
   );
 }
 
