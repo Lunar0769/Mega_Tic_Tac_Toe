@@ -223,42 +223,37 @@ server.on('connection', (ws) => {
           const gameWinner = checkGameWinner(boardStatuses);
           const gameTie = isGameTie(boardStatuses);
           
+          // Toggle turn first
+          gameRoom.xIsNext = !gameRoom.xIsNext;
+
           // Advanced logic for next board determination
           const targetBoardIndex = message.cellIndex;
           const targetBoardStatus = getBoardStatus(gameRoom.boards[targetBoardIndex]);
           
+          console.log(`Move: ${message.symbol} played in board ${message.boardIndex}, cell ${message.cellIndex}`);
           console.log(`Target board ${targetBoardIndex} status:`, targetBoardStatus);
           
           if (targetBoardStatus !== null) {
-            // Target board is completed
+            // Target board is completed - need board selection
             const winnerSymbol = targetBoardStatus === 'tie' ? null : targetBoardStatus;
-            const nextPlayerSymbol = gameRoom.xIsNext ? 'O' : 'X'; // Next player after toggle
+            const currentPlayerSymbol = message.symbol; // Player who just moved
+            const nextPlayerSymbol = gameRoom.xIsNext ? 'X' : 'O'; // Next player after toggle
             
-            console.log(`Sub-board winner: ${winnerSymbol}, Next player: ${nextPlayerSymbol}`);
+            console.log(`Sub-board winner: ${winnerSymbol}, Current player: ${currentPlayerSymbol}, Next player: ${nextPlayerSymbol}`);
             
             if (winnerSymbol === nextPlayerSymbol) {
               // Winner of sub-board is the same as next player - they can choose any board
               gameRoom.nextBoard = null;
-              console.log('Next player can choose any board');
-            } else if (winnerSymbol) {
-              // Winner of sub-board is different - they choose where next player plays
-              gameRoom.waitingForBoardSelection = true;
-              gameRoom.boardSelectionPlayer = winnerSymbol;
-              
-              console.log(`Board selection required by player ${winnerSymbol}`);
-              
-              // Notify ALL clients about board selection requirement (for UI updates)
-              broadcast(message.roomId, {
-                type: 'boardSelectionRequired',
-                player: gameRoom.boardSelectionPlayer
-              });
+              console.log('Next player (winner) can choose any board');
             } else {
-              // It's a tie, current player chooses
+              // Winner of sub-board chooses where next player plays
+              const selectorPlayer = winnerSymbol || currentPlayerSymbol; // Winner or current player if tie
               gameRoom.waitingForBoardSelection = true;
-              gameRoom.boardSelectionPlayer = message.symbol;
+              gameRoom.boardSelectionPlayer = selectorPlayer;
               
-              console.log(`Board selection required by current player ${message.symbol} (tie)`);
+              console.log(`Board selection required by player ${selectorPlayer}`);
               
+              // Notify ALL clients about board selection requirement
               broadcast(message.roomId, {
                 type: 'boardSelectionRequired',
                 player: gameRoom.boardSelectionPlayer
@@ -270,8 +265,7 @@ server.on('connection', (ws) => {
             console.log(`Next board set to ${targetBoardIndex}`);
           }
           
-          // Toggle turn
-          gameRoom.xIsNext = !gameRoom.xIsNext;
+          // Turn already toggled above
 
           // Broadcast move to all clients in room
           broadcast(message.roomId, {

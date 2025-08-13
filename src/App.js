@@ -122,11 +122,15 @@ function App() {
       case 'boardSelectionRequired':
         // Winner of completed sub-board needs to choose next board
         console.log('Board selection required for player:', data.player, 'My symbol:', playerSymbol);
+        console.log('Should show modal:', data.player === playerSymbol);
         setBoardSelectionPlayer(data.player);
         
         // Only show modal to the player who won the sub-board
         if (data.player === playerSymbol) {
+          console.log('Setting showBoardSelection to true');
           setShowBoardSelection(true);
+        } else {
+          console.log('Not showing modal - not my turn to select');
         }
         break;
       

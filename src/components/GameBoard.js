@@ -29,12 +29,32 @@ function GameBoard({
   const isMyTurn = (xIsNext && playerSymbol === 'X') || (!xIsNext && playerSymbol === 'O');
   const gameEnded = gameWinner || isGameTie;
 
+  // Debug logging
+  console.log('GameBoard render - showBoardSelection:', showBoardSelection, 'boardSelectionPlayer:', boardSelectionPlayer);
+
   return (
     <div className="game-container">
-      {/* Main Game Area */}
+      {/* Main Game Area - Pure Game Board Only */}
       <div className="game-main">
-        <div className="game-info-compact">
-          <div>Room: {roomId}</div>
+        <div className="mega-board">
+          {boards.map((cells, boardIdx) => (
+            <SubBoard
+              key={boardIdx}
+              cells={cells}
+              isActive={!gameWinner && !isGameTie && (nextBoard === null || nextBoard === boardIdx)}
+              onCellClick={cellIdx => onCellClick(boardIdx, cellIdx)}
+              canClick={isMyTurn && gameStarted && !isSpectator}
+              boardStatus={boardStatuses[boardIdx]}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Sidebar - All Game Info */}
+      <div className="game-sidebar">
+        {/* Room Info */}
+        <div className="room-info">
+          <div className="room-title">Room: {roomId}</div>
           <div className="player-info">
             {isSpectator ? (
               <span>{username} - Spectating</span>
@@ -42,14 +62,17 @@ function GameBoard({
               <span>{username} - Player {playerSymbol}</span>
             )}
           </div>
-          
+        </div>
+
+        {/* Game Status */}
+        <div className="game-status">
           {!gameStarted ? (
             <div className="waiting">
               Waiting for another player to join...
             </div>
           ) : gameWinner ? (
             <div className="game-winner">
-              🎉 Player {gameWinner} wins the game! 🎉
+              🎉 Player {gameWinner} wins! 🎉
             </div>
           ) : isGameTie ? (
             <div className="game-tie">
@@ -68,7 +91,7 @@ function GameBoard({
                   <div className={`turn-indicator ${isMyTurn ? 'my-turn' : 'opponent-turn'}`}>
                     {isMyTurn ? 'Your turn' : `Player ${xIsNext ? 'X' : 'O'}'s turn`}
                   </div>
-                  <div>
+                  <div className="board-instruction">
                     {nextBoard !== null 
                       ? `Play in board ${nextBoard + 1}` 
                       : 'Play in any available board'
@@ -78,30 +101,35 @@ function GameBoard({
               )}
             </>
           )}
+          
+          {/* Debug Info */}
+          <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '8px' }}>
+            Debug: showModal={showBoardSelection.toString()}, selector={boardSelectionPlayer || 'none'}, mySymbol={playerSymbol || 'none'}
+            <br />
+            <button 
+              onClick={() => {
+                console.log('Manual board selection test - showing modal');
+                // Temporarily show the modal for testing
+                if (window.confirm('Show board selection modal for testing?')) {
+                  // This is a hack for testing - we'll call the parent's state setter
+                  console.log('Triggering board selection modal');
+                }
+              }}
+              style={{ fontSize: '0.7rem', padding: '4px 8px', marginTop: '4px' }}
+            >
+              Test Modal
+            </button>
+          </div>
         </div>
 
-        <div className="mega-board">
-          {boards.map((cells, boardIdx) => (
-            <SubBoard
-              key={boardIdx}
-              cells={cells}
-              isActive={!gameWinner && !isGameTie && (nextBoard === null || nextBoard === boardIdx)}
-              onCellClick={cellIdx => onCellClick(boardIdx, cellIdx)}
-              canClick={isMyTurn && gameStarted && !isSpectator}
-              boardStatus={boardStatuses[boardIdx]}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Sidebar */}
-      <div className="game-sidebar">
+        {/* Player Count */}
         <PlayerCount 
           players={players} 
           currentUser={username} 
           isSpectator={isSpectator} 
         />
 
+        {/* Replay Controls */}
         {gameEnded && (
           <ReplayControls
             players={players}
