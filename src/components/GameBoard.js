@@ -1,10 +1,33 @@
 import React from 'react';
 import SubBoard from './SubBoard';
+import PlayerCount from './PlayerCount';
+import ReplayControls from './ReplayControls';
+import BoardSelectionModal from './BoardSelectionModal';
 import { getAllBoardStatuses } from '../utils/gameLogic';
 
-function GameBoard({ boards, nextBoard, onCellClick, xIsNext, roomId, gameWinner, isGameTie, playerSymbol, gameStarted, players, isSpectator, username }) {
+function GameBoard({ 
+  boards, 
+  nextBoard, 
+  onCellClick, 
+  xIsNext, 
+  roomId, 
+  gameWinner, 
+  isGameTie, 
+  playerSymbol, 
+  gameStarted, 
+  players, 
+  isSpectator, 
+  username,
+  showBoardSelection,
+  onSelectBoard,
+  onCloseBoardSelection,
+  boardSelectionPlayer,
+  onReplay,
+  isHost
+}) {
   const boardStatuses = getAllBoardStatuses(boards);
   const isMyTurn = (xIsNext && playerSymbol === 'X') || (!xIsNext && playerSymbol === 'O');
+  const gameEnded = gameWinner || isGameTie;
 
   return (
     <div>
@@ -17,9 +40,10 @@ function GameBoard({ boards, nextBoard, onCellClick, xIsNext, roomId, gameWinner
             <span>{username} - Player {playerSymbol}</span>
           )}
         </div>
+        
         {!gameStarted ? (
           <div className="waiting">
-            Waiting for another player to join... (Debug: gameStarted={gameStarted.toString()}, players={players.length})
+            Waiting for another player to join...
             <br />
             <button onClick={() => console.log('Current state:', { gameStarted, players, playerSymbol, isSpectator })}>
               Debug State
@@ -47,6 +71,13 @@ function GameBoard({ boards, nextBoard, onCellClick, xIsNext, roomId, gameWinner
           </>
         )}
       </div>
+
+      <PlayerCount 
+        players={players} 
+        currentUser={username} 
+        isSpectator={isSpectator} 
+      />
+
       <div className="mega-board">
         {boards.map((cells, boardIdx) => (
           <SubBoard
@@ -59,6 +90,23 @@ function GameBoard({ boards, nextBoard, onCellClick, xIsNext, roomId, gameWinner
           />
         ))}
       </div>
+
+      {gameEnded && (
+        <ReplayControls
+          players={players}
+          isHost={isHost}
+          onReplay={onReplay}
+        />
+      )}
+
+      {showBoardSelection && (
+        <BoardSelectionModal
+          boards={boards}
+          onSelectBoard={onSelectBoard}
+          onClose={onCloseBoardSelection}
+          currentPlayer={boardSelectionPlayer}
+        />
+      )}
     </div>
   );
 }

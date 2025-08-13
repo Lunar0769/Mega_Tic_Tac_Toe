@@ -17,6 +17,9 @@ function App() {
   const [playerSymbol, setPlayerSymbol] = useState(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [players, setPlayers] = useState([]);
+  const [showBoardSelection, setShowBoardSelection] = useState(false);
+  const [boardSelectionPlayer, setBoardSelectionPlayer] = useState(null);
+  const [isHost, setIsHost] = useState(false);
 
   // Initialize 9 sub-boards, each with 9 null cells
   const initialBoards = Array.from({ length: 9 }, () => Array(9).fill(null));
@@ -30,6 +33,7 @@ function App() {
         setRoomId(data.roomId);
         setIsInRoom(true);
         setPlayerSymbol(data.playerSymbol);
+        setIsHost(true);
         break;
       
       case 'joinSuccess':
@@ -115,6 +119,22 @@ function App() {
         setPlayers(data.players);
         break;
       
+      case 'boardSelectionRequired':
+        // Winner of completed sub-board needs to choose next board
+        setShowBoardSelection(true);
+        setBoardSelectionPlayer(data.player);
+        break;
+      
+      case 'gameReset':
+        // Game has been reset for replay
+        setBoards(initialBoards);
+        setGameWinner(null);
+        setGameTied(false);
+        setXIsNext(true);
+        setNextBoard(null);
+        setPlayers(data.players);
+        break;
+      
       case 'error':
         // Handle server errors
         console.error('Server error:', data.message);
@@ -180,6 +200,27 @@ function App() {
     // This prevents desync issues and ensures turn validation
   };
 
+  // Handle board selection for completed sub-games
+  const handleBoardSelection = (boardIndex) => {
+    send({
+      type: 'selectBoard',
+      roomId,
+      boardIndex,
+      player: boardSelectionPlayer
+    });
+    setShowBoardSelection(false);
+    setBoardSelectionPlayer(null);
+  };
+
+  // Handle game replay
+  const handleReplay = (selectedPlayers) => {
+    send({
+      type: 'replayGame',
+      roomId,
+      players: selectedPlayers
+    });
+  };
+
   return (
     <>
       <ParticleBackground />
@@ -200,6 +241,12 @@ function App() {
             players={players}
             isSpectator={isSpectator}
             username={username}
+            showBoardSelection={showBoardSelection}
+            onSelectBoard={handleBoardSelection}
+            onCloseBoardSelection={() => setShowBoardSelection(false)}
+            boardSelectionPlayer={boardSelectionPlayer}
+            onReplay={handleReplay}
+            isHost={isHost}
           />
         )}
       </div>
