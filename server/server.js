@@ -152,7 +152,7 @@ server.on('connection', (ws) => {
               gameStarted: room.gameStarted,
               players: room.players
             };
-            console.log('Broadcasting game state:', gameStateMessage);
+
             broadcast(message.roomId, gameStateMessage, null); // Send to all clients including the new joiner
           } else {
             // Room is full, join as spectator
@@ -171,7 +171,7 @@ server.on('connection', (ws) => {
             }));
           }
 
-          console.log(`${message.username} joined room ${message.roomId}. Game started: ${room.gameStarted}, Players: ${room.players.length}`);
+
           break;
 
         case 'move':
@@ -239,19 +239,15 @@ server.on('connection', (ws) => {
             const currentPlayerSymbol = message.symbol; // Player who just moved
             const nextPlayerSymbol = gameRoom.xIsNext ? 'X' : 'O'; // Next player after toggle
             
-            console.log(`Sub-board winner: ${winnerSymbol}, Current player: ${currentPlayerSymbol}, Next player: ${nextPlayerSymbol}`);
             
             if (winnerSymbol === nextPlayerSymbol) {
               // Winner of sub-board is the same as next player - they can choose any board
               gameRoom.nextBoard = null;
-              console.log('Next player (winner) can choose any board');
             } else {
               // Winner of sub-board chooses where next player plays
               const selectorPlayer = winnerSymbol || currentPlayerSymbol; // Winner or current player if tie
               gameRoom.waitingForBoardSelection = true;
               gameRoom.boardSelectionPlayer = selectorPlayer;
-              
-              console.log(`Board selection required by player ${selectorPlayer}`);
               
               // Notify ALL clients about board selection requirement
               broadcast(message.roomId, {
@@ -262,7 +258,6 @@ server.on('connection', (ws) => {
           } else {
             // Target board is available
             gameRoom.nextBoard = targetBoardIndex;
-            console.log(`Next board set to ${targetBoardIndex}`);
           }
           
           // Turn already toggled above
@@ -284,7 +279,6 @@ server.on('connection', (ws) => {
             });
           }
 
-          console.log(`Move in room ${message.roomId}: board ${message.boardIndex}, cell ${message.cellIndex}, symbol ${message.symbol}`);
           if (gameWinner) console.log(`Game won by ${gameWinner} in room ${message.roomId}`);
           if (gameTie) console.log(`Game tied in room ${message.roomId}`);
           break;
@@ -324,7 +318,7 @@ server.on('connection', (ws) => {
             boardIndex: message.boardIndex
           });
           
-          console.log(`Board ${message.boardIndex} selected by ${ws.username} for room ${message.roomId}`);
+
           break;
 
         case 'replayGame':
@@ -354,7 +348,7 @@ server.on('connection', (ws) => {
             players: replayRoom.players
           });
           
-          console.log(`Game reset in room ${message.roomId} with players:`, newPlayers.map(p => p.username));
+
           break;
 
         default:

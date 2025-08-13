@@ -29,8 +29,7 @@ function GameBoard({
   const isMyTurn = (xIsNext && playerSymbol === 'X') || (!xIsNext && playerSymbol === 'O');
   const gameEnded = gameWinner || isGameTie;
 
-  // Debug logging
-  console.log('GameBoard render - showBoardSelection:', showBoardSelection, 'boardSelectionPlayer:', boardSelectionPlayer);
+
 
   return (
     <div className="game-container">
@@ -102,24 +101,7 @@ function GameBoard({
             </>
           )}
           
-          {/* Debug Info */}
-          <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '8px' }}>
-            Debug: showModal={showBoardSelection.toString()}, selector={boardSelectionPlayer || 'none'}, mySymbol={playerSymbol || 'none'}
-            <br />
-            <button 
-              onClick={() => {
-                console.log('Manual board selection test - showing modal');
-                // Temporarily show the modal for testing
-                if (window.confirm('Show board selection modal for testing?')) {
-                  // This is a hack for testing - we'll call the parent's state setter
-                  console.log('Triggering board selection modal');
-                }
-              }}
-              style={{ fontSize: '0.7rem', padding: '4px 8px', marginTop: '4px' }}
-            >
-              Test Modal
-            </button>
-          </div>
+
         </div>
 
         {/* Player Count */}
@@ -139,8 +121,8 @@ function GameBoard({
         )}
       </div>
 
-      {/* Board Selection Modal */}
-      {showBoardSelection && (
+      {/* Board Selection Modal - Show if player matches */}
+      {(showBoardSelection || (boardSelectionPlayer === playerSymbol)) && boardSelectionPlayer && (
         <BoardSelectionModal
           boards={boards}
           onSelectBoard={onSelectBoard}
@@ -148,6 +130,8 @@ function GameBoard({
           currentPlayer={boardSelectionPlayer}
         />
       )}
+      
+
     </div>
   );
 }

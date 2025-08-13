@@ -27,7 +27,6 @@ function App() {
 
   // Handle messages from WebSocket
   const handleMessage = useCallback((data) => {
-    console.log('Received message:', data); // Debug log
     switch (data.type) {
       case 'roomCreated':
         setRoomId(data.roomId);
@@ -83,7 +82,6 @@ function App() {
         break;
       
       case 'gameState':
-        console.log('Processing gameState message:', data);
         // Server sends full game state (useful for reconnection)
         if (data.boards) {
           setBoards(data.boards);
@@ -121,18 +119,17 @@ function App() {
       
       case 'boardSelectionRequired':
         // Winner of completed sub-board needs to choose next board
-        console.log('Board selection required for player:', data.player, 'My symbol:', playerSymbol);
-        console.log('Should show modal:', data.player === playerSymbol);
         setBoardSelectionPlayer(data.player);
         
         // Only show modal to the player who won the sub-board
         if (data.player === playerSymbol) {
-          console.log('Setting showBoardSelection to true');
           setShowBoardSelection(true);
         } else {
-          console.log('Not showing modal - not my turn to select');
+          setShowBoardSelection(false);
         }
         break;
+      
+
       
       case 'boardSelected':
         // Board has been selected, clear the waiting state
@@ -156,7 +153,6 @@ function App() {
       case 'error':
         // Handle server errors
         console.error('Server error:', data.message);
-        alert(data.message);
         break;
       
       default:
