@@ -33,6 +33,17 @@ function GameBoard({
 
   return (
     <div className="game-container">
+      {/* Left Sidebar - Replay Controls */}
+      {gameEnded && (
+        <div className="game-left-sidebar">
+          <ReplayControls
+            players={players}
+            isHost={isHost}
+            onReplay={onReplay}
+          />
+        </div>
+      )}
+
       {/* Main Game Area - Pure Game Board Only */}
       <div className="game-main">
         <div className={`mega-board ${boardSelectionPlayer && boardSelectionPlayer !== playerSymbol ? 'board-selection-disabled' : ''}`}>
@@ -114,14 +125,7 @@ function GameBoard({
           isSpectator={isSpectator} 
         />
 
-        {/* Replay Controls */}
-        {gameEnded && (
-          <ReplayControls
-            players={players}
-            isHost={isHost}
-            onReplay={onReplay}
-          />
-        )}
+
       </div>
 
       {/* Board Selection Modal - Show if player matches */}
