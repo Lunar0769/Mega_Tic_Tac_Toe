@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useWebSocket } from './hooks/useWebSocket';
-import Lobby from './components/Lobby';
-import GameBoard from './components/GameBoard';
+import Lobby from './components/Lobby.jsx';
+import GameBoard from './components/GameBoard.jsx';
+import ParticleBackground from './components/ParticleBackground.jsx';
+import { getAllBoardStatuses, checkGameWinner, isGameTie } from './utils/gameLogic';
 
 function App() {
   const [username, setUsername] = useState('');
@@ -9,92 +11,260 @@ function App() {
   const [isInRoom, setIsInRoom] = useState(false);
   const [isSpectator, setIsSpectator] = useState(false);
   const [xIsNext, setXIsNext] = useState(true);
-  const [nextBoard, setNextBoard] = useState(null); // 0-8 or null for any
+  const [nextBoard, setNextBoard] = useState(null);
+  const [gameWinner, setGameWinner] = useState(null);
+  const [gameTied, setGameTied] = useState(false);
+  const [playerSymbol, setPlayerSymbol] = useState(null);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [players, setPlayers] = useState([]);
+  const [showBoardSelection, setShowBoardSelection] = useState(false);
+  const [boardSelectionPlayer, setBoardSelectionPlayer] = useState(null);
+  const [isHost, setIsHost] = useState(false);
+
+  // Initialize 9 sub-boards, each with 9 null cells
   const initialBoards = Array.from({ length: 9 }, () => Array(9).fill(null));
   const [boards, setBoards] = useState(initialBoards);
 
-  // Handle incoming WebSocket messages
-  const handleMessage = (data) => {
+  // Handle messages from WebSocket
+  const handleMessage = useCallback((data) => {
     switch (data.type) {
       case 'roomCreated':
         setRoomId(data.roomId);
         setIsInRoom(true);
+        setPlayerSymbol(data.playerSymbol);
+        setIsHost(true);
         break;
+      
       case 'joinSuccess':
         setIsInRoom(true);
+        setPlayerSymbol(data.playerSymbol);
         break;
+      
       case 'spectateApproved':
         setIsSpectator(true);
         setIsInRoom(true);
         break;
-      case 'move': {
+      
+      case 'move':
         const { boardIndex, cellIndex, symbol } = data;
         setBoards(prev => {
-          const newBoards = prev.map(arr => arr.slice());
+          const newBoards = [...prev];
+          newBoards[boardIndex] = [...newBoards[boardIndex]];
           newBoards[boardIndex][cellIndex] = symbol;
           return newBoards;
         });
-        // Next board logic
+
+        // Determine next active board and check for wins
         const target = cellIndex;
-        const targetBoard = boards[target];
-        const isTargetFilled = !targetBoard?.some(cell => cell === null);
-        setNextBoard(isTargetFilled ? null : target);
+        setBoards(currentBoards => {
+          const newBoards = [...currentBoards];
+          newBoards[boardIndex] = [...newBoards[boardIndex]];
+          newBoards[boardIndex][cellIndex] = symbol;
+          
+          // Check for game winner
+          const boardStatuses = getAllBoardStatuses(newBoards);
+          const winner = checkGameWinner(boardStatuses);
+          const tie = isGameTie(boardStatuses);
+          
+          setGameWinner(winner);
+          setGameTied(tie);
+          
+          // Determine next board
+          const targetBoard = newBoards[target];
+          const isTargetCompleted = getAllBoardStatuses([targetBoard])[0] !== null;
+          setNextBoard(isTargetCompleted ? null : target);
+          
+          return newBoards;
+        });
+
+        // Toggle turn indicator
         setXIsNext(symbol === 'O');
         break;
-      }
+      
+      case 'gameState':
+        // Server sends full game state (useful for reconnection)
+        if (data.boards) {
+          setBoards(data.boards);
+          // Check for game winner when receiving state
+          const boardStatuses = getAllBoardStatuses(data.boards);
+          const winner = checkGameWinner(boardStatuses);
+          const tie = isGameTie(boardStatuses);
+          setGameWinner(winner);
+          setGameTied(tie);
+        }
+        if (data.nextBoard !== undefined) setNextBoard(data.nextBoard);
+        if (data.xIsNext !== undefined) setXIsNext(data.xIsNext);
+        if (data.gameStarted !== undefined) {
+          console.log('Setting gameStarted from', gameStarted, 'to:', data.gameStarted);
+          setGameStarted(data.gameStarted);
+        }
+        if (data.players) {
+          console.log('Setting players from', players, 'to:', data.players);
+          setPlayers(data.players);
+        }
+        console.log('After processing gameState - gameStarted:', data.gameStarted, 'players:', data.players?.length);
+        break;
+      
+      case 'gameEnd':
+        // Game has ended
+        if (data.winner) setGameWinner(data.winner);
+        if (data.tie) setGameTied(true);
+        break;
+      
+      case 'gameReady':
+        // Both players joined, game can start (legacy - now handled by gameState)
+        setGameStarted(data.gameStarted || true);
+        setPlayers(data.players);
+        break;
+      
+      case 'boardSelectionRequired':
+        // Winner of completed sub-board needs to choose next board
+        setBoardSelectionPlayer(data.player);
+        
+        // Only show modal to the player who won the sub-board
+        if (data.player === playerSymbol) {
+          setShowBoardSelection(true);
+        } else {
+          setShowBoardSelection(false);
+        }
+        break;
+      
+
+      
+      case 'boardSelected':
+        // Board has been selected, clear the waiting state
+        setShowBoardSelection(false);
+        setBoardSelectionPlayer(null);
+        setNextBoard(data.boardIndex);
+        break;
+      
+      case 'gameReset':
+        // Game has been reset for replay
+        setBoards(initialBoards);
+        setGameWinner(null);
+        setGameTied(false);
+        setXIsNext(true);
+        setNextBoard(null);
+        setPlayers(data.players);
+        setShowBoardSelection(false);
+        setBoardSelectionPlayer(null);
+        break;
+      
+      case 'error':
+        // Handle server errors
+        console.error('Server error:', data.message);
+        break;
+      
       default:
+        console.log('Unknown message type:', data.type);
         break;
     }
-  };
+  }, []);
 
-  // Use WebSocket hook (point to your server)
-  const { send } = useWebSocket('ws://localhost:4000', handleMessage);
+  // Establish WebSocket connection
+  const { send } = useWebSocket(
+    process.env.NODE_ENV === 'production' 
+      ? 'wss://hypergrid-jpsb.onrender.com' // Your live Render server
+      : 'ws://localhost:4000', 
+    handleMessage
+  );
 
-  // Room creation
+  // Create a new room (as owner)
   const handleCreateRoom = (name) => {
     setUsername(name);
     send({ type: 'createRoom', username: name });
   };
 
-  // Room join
+  // Join an existing room
   const handleJoinRoom = (name, room) => {
     setUsername(name);
     setRoomId(room);
     send({ type: 'joinRoom', username: name, roomId: room });
   };
 
-  // On cell click, send move and update local state
+  // Handle clicking on a cell
   const handleCellClick = (boardIdx, cellIdx) => {
-    if (!isInRoom || isSpectator) return;
+    // If game is not ready, or we're a spectator, or game is over, do nothing
+    if (!isInRoom || isSpectator || gameWinner || gameTied || !gameStarted) return;
+
+    // Check if it's our turn
+    const isMyTurn = (xIsNext && playerSymbol === 'X') || (!xIsNext && playerSymbol === 'O');
+    if (!isMyTurn) return;
+
+    // Check if click is in the allowed board
     if (nextBoard !== null && nextBoard !== boardIdx) return;
+
+    // Check if the sub-board is already completed
+    const boardStatuses = getAllBoardStatuses(boards);
+    if (boardStatuses[boardIdx] !== null) return;
+
+    // Prevent clicking on an occupied cell
     if (boards[boardIdx][cellIdx] !== null) return;
-    const symbol = xIsNext ? 'X' : 'O';
-    send({ type: 'move', roomId, boardIndex: boardIdx, cellIndex: cellIdx, symbol });
-    setBoards(prev => {
-      const newBoards = prev.map(arr => arr.slice());
-      newBoards[boardIdx][cellIdx] = symbol;
-      return newBoards;
+
+    // Send the move to server
+    send({ 
+      type: 'move', 
+      roomId, 
+      boardIndex: boardIdx, 
+      cellIndex: cellIdx, 
+      symbol: playerSymbol 
     });
-    // Next board logic
-    const target = cellIdx;
-    const targetBoard = boards[target];
-    const isTargetFilled = targetBoard?.every(cell => cell !== null);
-    setNextBoard(isTargetFilled ? null : target);
-    setXIsNext(!xIsNext);
+
+    // Don't update local state optimistically - wait for server confirmation
+    // This prevents desync issues and ensures turn validation
+  };
+
+  // Handle board selection for completed sub-games
+  const handleBoardSelection = (boardIndex) => {
+    send({
+      type: 'selectBoard',
+      roomId,
+      boardIndex,
+      player: boardSelectionPlayer
+    });
+    setShowBoardSelection(false);
+    setBoardSelectionPlayer(null);
+  };
+
+  // Handle game replay
+  const handleReplay = (selectedPlayers) => {
+    send({
+      type: 'replayGame',
+      roomId,
+      players: selectedPlayers
+    });
   };
 
   return (
-    <div className="App">
-      {!isInRoom ? (
-        <Lobby onCreate={handleCreateRoom} onJoin={handleJoinRoom} />
-      ) : (
-        <GameBoard
-          boards={boards}
-          nextBoard={nextBoard}
-          onCellClick={handleCellClick}
-        />
-      )}
-    </div>
+    <>
+      <ParticleBackground />
+      <div className="App">
+        {!isInRoom ? (
+          <Lobby onCreate={handleCreateRoom} onJoin={handleJoinRoom} />
+        ) : (
+          <GameBoard
+            boards={boards}
+            nextBoard={nextBoard}
+            onCellClick={handleCellClick}
+            xIsNext={xIsNext}
+            roomId={roomId}
+            gameWinner={gameWinner}
+            isGameTie={gameTied}
+            playerSymbol={playerSymbol}
+            gameStarted={gameStarted}
+            players={players}
+            isSpectator={isSpectator}
+            username={username}
+            showBoardSelection={showBoardSelection}
+            onSelectBoard={handleBoardSelection}
+            onCloseBoardSelection={() => setShowBoardSelection(false)}
+            boardSelectionPlayer={boardSelectionPlayer}
+            onReplay={handleReplay}
+            isHost={isHost}
+          />
+        )}
+      </div>
+    </>
   );
 }
 
