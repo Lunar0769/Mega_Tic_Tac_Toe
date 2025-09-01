@@ -4,9 +4,8 @@ const config = {
     websocketUrl: 'ws://localhost:4000'
   },
   production: {
-    // You'll need to replace this with your deployed WebSocket server URL
-    // Options: Railway, Render, Heroku, or any other WebSocket hosting service
-    websocketUrl: 'wss://your-websocket-server.herokuapp.com' // Replace with your actual URL
+    // Live WebSocket server on Render
+    websocketUrl: 'wss://hypergrid-jpsb.onrender.com'
   }
 };
 

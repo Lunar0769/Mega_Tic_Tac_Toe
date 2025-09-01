@@ -164,7 +164,7 @@ function App() {
   // Establish WebSocket connection
   const { send } = useWebSocket(
     process.env.NODE_ENV === 'production' 
-      ? 'wss://Mega_Tic_Tac_Toe.railway.app' // Replace with your actual Railway URL
+      ? 'wss://hypergrid-jpsb.onrender.com' // Your live Render server
       : 'ws://localhost:4000', 
     handleMessage
   );
